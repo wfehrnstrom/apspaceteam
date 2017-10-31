@@ -23,8 +23,9 @@ uint8_t RF24::read_register(uint8_t reg, uint8_t* buf, uint8_t len)
   // The global variable csn_pin can be used to access the SS pin.
   // The status variable should be set to the status byte returned by the command (explained in the datasheet).
   // TODO: END HERE
-    //In command R_REGISTER given by datasheet, there is mention of 5 bit register map address. TODO: Find out what this is
-    SPI.beginTransaction(SPISettings(DATA_RATE, MSBFIRST, SPI_MODE0));
+  //In command R_REGISTER given by datasheet, there is mention of 5 bit register map address. TODO: Find out what this is
+  SPI.beginTransaction(SPISettings(DATA_RATE, MSBFIRST, SPI_MODE0));
+  
   return status;
 }
 
