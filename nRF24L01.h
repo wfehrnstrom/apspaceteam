@@ -25,6 +25,7 @@
 
 // TODO: START HERE
 // Use the register map to find the mappings for the following defines
+<<<<<<< HEAD
 #define NRF_CONFIG 0x00
 #define EN_AA 0x01
 #define SETUP_RETR 0x04
@@ -32,6 +33,15 @@
 #define RF_SETUP 0x06
 #define SETUP_AW 0x03
 #define NRF_STATUS 0x07
+=======
+#define NRF_CONFIG  0x00
+#define EN_AA       0x01
+#define SETUP_RETR  0x04
+#define RF_CH       0x05
+#define RF_SETUP    0x06
+#define SETUP_AW    0x03
+#define NRF_STATUS  0x07
+>>>>>>> 5e3a6259acac678f3769b9412c0a31e5ef7dcdc2
 #define FIFO_STATUS 0x17
 // TODO: END HERE
 
