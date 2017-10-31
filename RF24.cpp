@@ -67,10 +67,26 @@ void RF24::setAutoAck(bool enable)
 
 void RF24::setPALevel(uint8_t level)
 {
-  // TODO: START HERE
-  // set the power level bits in the RF_SETUP register based on the level parameter.
-  // level can be RF24_PA_MIN, RF24_PA_LOW, RF24_PA_HIGH, or RF24_PA_MAX.
-  // TODO: END HERE
+    // TODO: START HERE
+    // set the power level bits in the RF_SETUP register based on the level parameter.
+    // level can be RF24_PA_MIN, RF24_PA_LOW, RF24_PA_HIGH, or RF24_PA_MAX.
+    const int buf_length = 8;
+    const uint8_t buf[buf_length];
+    if(level == RF24_PA_MIN){
+        buf[buf_length] = {0, 0, 1, 1, 1, 1, 1, 1};
+        this->write_register(RF_SETUP, &buf, buf_length);
+    }
+    else if (level == RF24_PA_LOW) {
+        buf[buf_length] = {0, 0, 0, 0, 0, 0, 0, 0};
+        this->write_register(RF_SETUP, &buf, buf_length);
+    } else if (level == RF24_PA_HIGH) {
+        buf[buf_length] = {0, 0, 0, 0, 0, 0, 0, 0};
+        this->write_register(RF_SETUP, &buf, buf_length);
+    } else if (level == RF24_PA_MAX) {
+        buf[buf_length] = {0, 0, 0, 0, 0, 0, 0, 0};
+        this->write_register(RF_SETUP, &buf, buf_length);
+    }
+    // TODO: END HERE
 }
 
 /****************************************************************************/
