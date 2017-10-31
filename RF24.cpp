@@ -10,7 +10,6 @@
 #include "RF24_config.h"
 #include "RF24.h"
 
-#define AUTO_ACK_REG 0x01
 #define DATA_RATE 10000000
 /****************************************************************************/
 
@@ -24,8 +23,9 @@ uint8_t RF24::read_register(uint8_t reg, uint8_t* buf, uint8_t len)
   // The global variable csn_pin can be used to access the SS pin.
   // The status variable should be set to the status byte returned by the command (explained in the datasheet).
   // TODO: END HERE
-    //In command R_REGISTER given by datasheet, there is mention of 5 bit register map address. TODO: Find out what this is
-    SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE0));
+  //In command R_REGISTER given by datasheet, there is mention of 5 bit register map address. TODO: Find out what this is
+  SPI.beginTransaction(SPISettings(DATA_RATE, MSBFIRST, SPI_MODE0));
+  
   return status;
 }
 
@@ -50,16 +50,16 @@ void RF24::setAutoAck(bool enable)
 {
     // TODO: START HERE
     // This function either enables all of the AA bits or disables all of the AA bits in the Enable AutoAck register.
-    const int buf_length = 8;
-    const uint8_t buf[buf_length];
+    uint8_t buf_length = 1;
+    uint8_t auto_ack_val = 0;
     if(enable){
-        buf[buf_length] = {0, 0, 1, 1, 1, 1, 1, 1};
-        this->write_register(AUTO_ACK_REG, &buf, buf_length);
+        auto_ack_val = 0b00111111;
     }
     else{
-        buf[buf_length] = {0, 0, 0, 0, 0, 0, 0, 0};
-        this->write_register(AUTO_ACK_REG, &buf, buf_length);
+        auto_ack_val = 0;
     }
+    const uint8_t buf[buf_length] = {auto_ack_val};
+    this->write_register(EN_AA, buf, buf_length);
     // TODO: END HERE
 }
 
@@ -95,7 +95,27 @@ void RF24::setCRCLength(rf24_crclength_e length)
 {
     // TODO: START HERE
     // Set the EN_CRC and CRC0 bits in the CONFIG register based on the length parameter.
-    // length can either be RF24_CRC_DIABLED, RF24_CRC_8, or RF24_CRC_16.
+    // length can either be RF24_CRC_DISABLED, RF24_CRC_8, or RF24_CRC_16.
+    uint8_t buf_length = 1;
+    //TODO: Const cast buf instead of creating whole new array
+    uint8_t read_buf[buf_length];
+    this->read_register(NRF_CONFIG, read_buf, buf_length);
+    uint8_t config_val = read_buf[0];
+    switch(length){
+        case RF24_CRC_DISABLED:
+            config_val |= 0 << EN_CRC;
+            break;
+        case RF24_CRC_8:
+            config_val |= 1 << EN_CRC;
+            config_val |= 0 << CRCO;
+            break;
+        case RF24_CRC_16:
+            config_val |= 1 << EN_CRC;
+            config_val |= 1 << CRCO;
+            break;
+    }
+    const uint8_t buf[buf_length] = {config_val};
+    this->write_register(NRF_CONFIG, buf, buf_length);
     // TODO: END HERE
 }
 
@@ -104,6 +124,10 @@ void RF24::setRetries(uint8_t delay, uint8_t count)
 {
     // TODO: START HERE
     // Set the delay and count bits in the SETUP_RETR register.
+    uint8_t buf_length = 1;
+    uint8_t buf[buf_length] = {0 | (delay << 4)};
+    buf[0] |= count;
+    this->write_register(SETUP_RETR, buf, buf_length);
     // TODO: END HERE
 }
 
