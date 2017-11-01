@@ -44,7 +44,10 @@ uint8_t RF24::write_register(uint8_t reg, const uint8_t* buf, uint8_t len)
     // The global variable csn_pin can be used to access the SS pin.
     // The status variable should be set to the status byte returned by the command (explained in the datasheet).
     // TODO: END HERE
-    uint8_t data[len] = buf;//SPI.transfer() modifies buf, so it can't be a const
+    uint8_t data[len];//SPI.transfer() modifies buf, so it can't be a const
+    for (uint8_t i = 0; i < len; i++) {
+        data[i] = buf[i];
+    }
     SPI.beginTransaction(SPISettings(DATA_RATE, MSBFIRST, SPI_MODE0));
     digitalWrite(csn_pin, LOW);
     status = SPI.transfer((reg & REGISTER_MASK) | W_REGISTER);
