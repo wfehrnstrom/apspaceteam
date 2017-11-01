@@ -15,33 +15,43 @@
 
 uint8_t RF24::read_register(uint8_t reg, uint8_t* buf, uint8_t len)
 {
-  uint8_t status = 0;
-  // TODO: START HERE
-  // Implements the R_REGISTER command in the datasheet.
-  // Read len number of bytes into the array pointed to by buf, from the register reg.
-  // Only use DigitalWrite and the Arduino SPI library when implementing this function.
-  // The global variable csn_pin can be used to access the SS pin.
-  // The status variable should be set to the status byte returned by the command (explained in the datasheet).
-  // TODO: END HERE
-  //In command R_REGISTER given by datasheet, there is mention of 5 bit register map address. TODO: Find out what this is
-  SPI.beginTransaction(SPISettings(DATA_RATE, MSBFIRST, SPI_MODE0));
-  
-  return status;
+    uint8_t status = 0;
+    // TODO: START HERE
+    // Implements the R_REGISTER command in the datasheet.
+    // Read len number of bytes into the array pointed to by buf, from the register reg.
+    // Only use DigitalWrite and the Arduino SPI library when implementing this function.
+    // The global variable csn_pin can be used to access the SS pin.
+    // The status variable should be set to the status byte returned by the command (explained in the datasheet).
+    // TODO: END HERE
+    SPI.beginTransaction(SPISettings(DATA_RATE, MSBFIRST, SPI_MODE0));
+    digitalWrite(csn_pin, LOW);
+    status = SPI.transfer((reg & REGISTER_MASK) | R_REGISTER);
+    SPI.transfer(buf, len);//write dummy data, the data we want to retrieve will be stored in buf
+    digitalWrite(csn_pin, HIGH);
+    SPI.endTransaction();
+    return status;
 }
 
 /****************************************************************************/
 
 uint8_t RF24::write_register(uint8_t reg, const uint8_t* buf, uint8_t len)
 {
-  uint8_t status = 0;
-  // TODO: START HERE
-  // Implements the W_REGISTER command in the datasheet.
-  // Write len number of bytes from the array pointed to by buf, to the register reg.
-  // Only use DigitalWrite and the Arduino SPI library when implementing this function.
-  // The global variable csn_pin can be used to access the SS pin.
-  // The status variable should be set to the status byte returned by the command (explained in the datasheet).
-  // TODO: END HERE
-  return status;
+    uint8_t status = 0;
+    // TODO: START HERE
+    // Implements the W_REGISTER command in the datasheet.
+    // Write len number of bytes from the array pointed to by buf, to the register reg.
+    // Only use DigitalWrite and the Arduino SPI library when implementing this function.
+    // The global variable csn_pin can be used to access the SS pin.
+    // The status variable should be set to the status byte returned by the command (explained in the datasheet).
+    // TODO: END HERE
+    uint8_t data[len] = buf;//SPI.transfer() modifies buf, so it can't be a const
+    SPI.beginTransaction(SPISettings(DATA_RATE, MSBFIRST, SPI_MODE0));
+    digitalWrite(csn_pin, LOW);
+    status = SPI.transfer((reg & REGISTER_MASK) | W_REGISTER);
+    SPI.transfer(data, len);
+    digitalWrite(csn_pin, HIGH);
+    SPI.endTransaction();
+    return status;
 }
 
 /****************************************************************************/
@@ -70,19 +80,18 @@ void RF24::setPALevel(uint8_t level)
     // TODO: START HERE
     // set the power level bits in the RF_SETUP register based on the level parameter.
     // level can be RF24_PA_MIN, RF24_PA_LOW, RF24_PA_HIGH, or RF24_PA_MAX.
-    const int buf_length = 8;
+    uint8_t buf_length = 1;
     uint8_t buf[buf_length];
-    this->read_register(NRF_CONFIG, buf, buf_length);
-    uint8_t bit2 = 0;
-    uint8_t bit1 = 0;
-    if (level == RF24_PA_HIGH|| level == RF24_PA_MAX) {
-      bit2 = 1;
+    this->read_register(RF_SETUP, buf, buf_length);
+    if (level == RF24_PA_MIN) {
+        buf = {(buf[0] & 0b11111001) | 0b00000000}
+    } else if (level == RF24_PA_LOW) {
+        buf = {(buf[0] & 0b11111001) | 0b00000010}
+    } else if (level == RF24_PA_HIGH) {
+        buf = {(buf[0] & 0b11111001) | 0b00000100}
+    } else if (level == RF24_PA_MAX) {
+        buf = {(buf[0] & 0b11111001) | 0b00000110}
     }
-    if (level == RF24_PA_LOW || level == RF24_PA_MAX) {
-      bit1 = 1;
-    }
-    buf[5] = bit2
-    buf[6] = bit1
     this->write_register(RF_SETUP, buf, buf_length);
     // TODO: END HERE
 }
