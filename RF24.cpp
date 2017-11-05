@@ -26,7 +26,9 @@ uint8_t RF24::read_register(uint8_t reg, uint8_t* buf, uint8_t len)
     SPI.beginTransaction(SPISettings(DATA_RATE, MSBFIRST, SPI_MODE0));
     digitalWrite(csn_pin, LOW);
     status = SPI.transfer((reg & REGISTER_MASK) | R_REGISTER);
-    SPI.transfer(buf, len);//write dummy data, the data we want to retrieve will be stored in buf
+    SPI.transfer(buf, len);
+    // while (len--)
+    //     *buf++ = SPI.transfer(0xff);
     digitalWrite(csn_pin, HIGH);
     SPI.endTransaction();
     return status;
@@ -52,6 +54,8 @@ uint8_t RF24::write_register(uint8_t reg, const uint8_t* buf, uint8_t len)
     digitalWrite(csn_pin, LOW);
     status = SPI.transfer((reg & REGISTER_MASK) | W_REGISTER);
     SPI.transfer(data, len);
+    // while (len--)
+    //     SPI.transfer(*buf++);
     digitalWrite(csn_pin, HIGH);
     SPI.endTransaction();
     return status;
@@ -66,7 +70,7 @@ void RF24::setAutoAck(bool enable)
     uint8_t buf_length = 1;
     uint8_t auto_ack_val = 0;
     if(enable){
-        auto_ack_val = 0b00111111;
+        auto_ack_val = 0b00111111;//enable AA on all 6 data pipes (0-5)
     }
     else{
         auto_ack_val = 0;
@@ -87,13 +91,13 @@ void RF24::setPALevel(uint8_t level)
     uint8_t buf[buf_length];
     this->read_register(RF_SETUP, buf, buf_length);
     if (level == RF24_PA_MIN) {
-        buf = {(buf[0] & 0b11111001) | 0b00000000}
+        buf[0] = (buf[0] & 0b11111001) | 0b00000000;
     } else if (level == RF24_PA_LOW) {
-        buf = {(buf[0] & 0b11111001) | 0b00000010}
+        buf[0] = (buf[0] & 0b11111001) | 0b00000010;
     } else if (level == RF24_PA_HIGH) {
-        buf = {(buf[0] & 0b11111001) | 0b00000100}
+        buf[0] = (buf[0] & 0b11111001) | 0b00000100;
     } else if (level == RF24_PA_MAX) {
-        buf = {(buf[0] & 0b11111001) | 0b00000110}
+        buf[0] = (buf[0] & 0b11111001) | 0b00000110;
     }
     this->write_register(RF_SETUP, buf, buf_length);
     // TODO: END HERE
@@ -113,15 +117,15 @@ void RF24::setCRCLength(rf24_crclength_e length)
     uint8_t config_val = read_buf[0];
     switch(length){
         case RF24_CRC_DISABLED:
-            config_val |= 0 << EN_CRC;
+            config_val =  (config_val & 0b11110111) | (0 << EN_CRC);
             break;
         case RF24_CRC_8:
-            config_val |= 1 << EN_CRC;
-            config_val |= 0 << CRCO;
+            config_val = (config_val & 0b11110111) | (1 << EN_CRC);
+            config_val = (config_val & 0b11111011) | (0 << CRCO);
             break;
         case RF24_CRC_16:
-            config_val |= 1 << EN_CRC;
-            config_val |= 1 << CRCO;
+            config_val = (config_val & 0b11110111) | (1 << EN_CRC);
+            config_val = (config_val & 0b11111011) | (1 << CRCO);
             break;
     }
     const uint8_t buf[buf_length] = {config_val};
